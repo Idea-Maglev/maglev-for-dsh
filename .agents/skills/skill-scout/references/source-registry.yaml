@@ -1,0 +1,35 @@
+# Source Registry - 内置精选来源（Built-in Layer）
+# 本文件仅保留少量高质量、高命中率的核心来源
+# 用户自定义来源请添加到 skill-sources.yaml（仓库根目录）
+#
+# 数据结构 (SourceRegistryEntry):
+#   - name: string          # 来源名称
+#     url: string           # URL 或标识
+#     type: string          # github / marketplace / community
+#     priority: integer     # 优先级权重 (1-10, 10 最高)
+#     description: string   # 来源描述
+
+sources:
+  - name: "Agent Skills"
+    url: "https://github.com/agentskills"
+    type: community
+    priority: 10
+    description: "Agent Skills 开放标准官方组织，维护技能规范与示例仓库，跨代理技能生态的核心来源。"
+
+  - name: "OpenAI Skills Catalog"
+    url: "https://github.com/openai/skills"
+    type: github
+    priority: 9
+    description: "OpenAI 官方 Codex Skills Catalog，覆盖系统技能、精选技能与实验技能。"
+
+  - name: "Vercel Skills"
+    url: "https://github.com/vercel-labs/skills"
+    type: github
+    priority: 9
+    description: "Vercel 开放 agent skills CLI 与技能分发工具，仓库活跃且兼容性强。"
+
+  - name: "Learn Skills Hub"
+    url: "https://www.learn-skills.dev/"
+    type: marketplace
+    priority: 8
+    description: "AI Agent Skills 聚合式技能市场，提供搜索、趋势与下载数据，适合广覆盖检索。"

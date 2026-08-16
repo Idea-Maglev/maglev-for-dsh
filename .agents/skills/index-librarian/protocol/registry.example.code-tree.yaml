@@ -1,0 +1,38 @@
+# registry.yaml track 模板 — type=code-tree
+# 用途: 索引代码仓库（锚点导航 + 可选 radar 摘要）
+# 用法: 复制以下条目到你的 registry.yaml `tracks:` 列表末尾，按需调整字段
+
+# AI 助手提示:
+# - 使用本模板时直接抄下面字段即可，无需现场编排。
+# - code-tree 默认窄范围（depth_limit=5 / 防爆参数继承 smart_map.py），不会扫整仓库每文件。
+# - radar_summary 段是可选；不开启则只输出锚点导航。开启后由脚本 subprocess 调用 radar，
+#   摘要被截断到 max_output_lines 后落盘，AI 只能看到截断后内容（D24/D27）。
+
+tracks:
+  - id: my-code                          # 必填 — 用户可改为业务名（kebab-case）
+    type: code-tree                      # 必填 — 固定为 code-tree
+    root: src/                           # 必填 — 代码根目录（不要写 `.`）
+    output: src/_meta/index.yaml         # 可选 — 索引产物落点
+    depth_limit: 5                       # 可选 — 锚点扫描深度（默认 5，D25）
+    ignore:                              # 可选 — 覆盖默认 IGNORE_DIRS（默认见下方注释）
+      - node_modules
+      - dist
+      - build
+      - vendor
+      - __pycache__
+    radar_summary:                       # 可选 — 是否调用 radar 拉摘要
+      enabled: true                      # 默认 false；开启需保证 radar binary 在 PATH
+      hotspot_top: 10                    # radar hotspot 子命令 Top N
+      include_unused: true               # 是否拉 unused 计数
+      include_cycles_count: true         # 是否拉 cycles 计数
+      max_output_lines: 200              # 摘要段截断阈值（防爆，D24）
+
+# 字段说明:
+# - depth_limit / ignore 用于第一段「锚点导航」，参数继承自 smart_map.py 常量（D25）：
+#   * DEFAULT_IGNORE_DIRS = {node_modules, .git, .idea, .vscode, __pycache__, dist, build, coverage, .venv, venv}
+#   * DEFAULT_MAX_DEPTH = 5
+#   * DEFAULT_MAX_LINES = 200
+# - radar_summary 用于第二段「摘要调用」，由 _scan_code_tree 容错降级（D26）：
+#   * radar binary 不存在 → 跳过摘要段，只写锚点段
+#   * radar 调用超时 / 异常 → 摘要段写 {skipped: true, reason: ...}
+# - 完整 AST/调用图请直接使用 radar skill；本 track 仅提供"锚点 + 摘要"两段式导航

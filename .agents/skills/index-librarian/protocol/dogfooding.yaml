@@ -1,0 +1,62 @@
+version: 1
+tasks:
+  - id: navigation-gate-current-design
+    intent: "找到 index-librarian 导航门禁的实现与消费路径"
+    missing_questions:
+      - "哪些技能步骤会消费导航收据"
+      - "升级链状态在何处定义与校验"
+    expected_paths:
+      - "docs/thinking/20_architecture/2026-07-21-navigation-gate-scope-design.md"
+      - "docs/thinking/20_architecture/2026-07-21-navigation-insufficient-escalation-design.md"
+    top_k: 5
+  - id: navigation-consumption-context
+    intent: "直接模式上下文收集 导航收据 升级链"
+    expected_paths:
+      - ".agents/skills/context-implementer/references/step-02-context-gathering.md"
+    top_k: 5
+  - id: navigation-status-protocol
+    intent: "导航收据 状态 升级链 契约"
+    expected_any_paths:
+      - "docs/thinking/20_architecture/2026-07-21-navigation-insufficient-escalation-design.md"
+      - "docs/thinking/20_architecture/2026-07-21-navigation-gate-scope-design.md"
+    top_k: 5
+  - id: navigation-quality-audit
+    intent: "导航收据 质量复核 exhausted escalated"
+    expected_any_paths:
+      - "docs/thinking/70_retrospective/2026-07-21-navigation-governance-chain-closure-note.md"
+      - "docs/thinking/70_retrospective/2026-07-21-navigation-governance-dogfooding-sample.md"
+    top_k: 5
+  - id: index-librarian-responsibility
+    intent: "项目索引管家"
+    expected_paths:
+      - ".agents/skills/index-librarian/SKILL.md"
+    top_k: 3
+  - id: radar-specialist
+    intent: "radar 函数调用者依赖分析"
+    expected_paths:
+      - ".agents/skills/radar/SKILL.md"
+    top_k: 3
+  - id: historical-index-design
+    intent: "unified_doc_tree_indexer 技术设计"
+    expected_paths:
+      - "specs/90_archive/unified_doc_tree_indexer/02_design.md"
+    top_k: 5
+  - id: missing-source
+    intent: "qzvwx-9174-nonexistent-source"
+    expected_status: insufficient
+    top_k: 3
+  - id: docs-init-manual
+    intent: "Maglev 初始化 使用手册"
+    expected_paths:
+      - "docs/guides/20_operations/maglev_init_manual.md"
+    top_k: 3
+  - id: docs-release-workflow
+    intent: "发布 版本 dry-run 流程"
+    expected_paths:
+      - "docs/guides/20_operations/maglev_development_release_workflow.md"
+    top_k: 3
+  - id: docs-governance-rationale
+    intent: "AI Coding 治理 为什么"
+    expected_paths:
+      - "docs/marketing/assets/why_ai_coding_needs_governance/published.md"
+    top_k: 3

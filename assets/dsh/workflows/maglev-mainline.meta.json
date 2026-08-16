@@ -1,0 +1,11 @@
+{
+  "name": "maglev-mainline",
+  "description": "编排 Maglev 主链路：需求收敛 → 方案设计 → 综合验证 → 结晶回写，把一次模糊请求变成可验证、可沉淀的资产。",
+  "whenToUse": "当一个请求边界模糊、需要 spec 先行、或要在 dsh 上走完 Maglev 完整流程时。",
+  "phases": [
+    { "title": "收敛", "detail": "requirement-convergence：收敛需求边界与 Ready Gate" },
+    { "title": "设计", "detail": "spec-designer：形成可执行方案" },
+    { "title": "验证", "detail": "integrated-validator：requirements↔spec↔code↔tests 交叉验证" },
+    { "title": "结晶", "detail": "crystallization：把已验证结果写回 specs 知识分层" }
+  ]
+}

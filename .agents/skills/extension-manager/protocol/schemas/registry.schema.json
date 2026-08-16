@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://maglev.local/schemas/registry.schema.json",
+  "title": "Maglev Extension Registry",
+  "description": "Schema for registry.yaml files consumed by Maglev extension-manager.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "registry",
+    "extensions"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "registry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "extensions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/registry_extension"
+      }
+    }
+  },
+  "$defs": {
+    "relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "^(?:/|[A-Za-z]:|https?://)"
+      }
+    },
+    "registry_extension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "summary",
+        "category",
+        "maturity"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "asset_pack",
+            "external_integration"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "execution",
+            "testing",
+            "review",
+            "release",
+            "knowledge",
+            "other"
+          ]
+        },
+        "maturity": {
+          "type": "string",
+          "enum": [
+            "official_recommended",
+            "experimental",
+            "team_internal"
+          ]
+        },
+        "provides_slots": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "code-execution"
+            ]
+          }
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "git",
+                "local"
+              ]
+            },
+            "url": {
+              "type": "string",
+              "minLength": 1
+            },
+            "ref": {
+              "type": "string",
+              "minLength": 1
+            },
+            "path": {
+              "$ref": "#/$defs/relative_path"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "type": {
+                    "const": "git"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "url"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "type": {
+                    "const": "local"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          ]
+        },
+        "manifest_path": {
+          "$ref": "#/$defs/relative_path"
+        },
+        "upstream": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repository", "install_url"],
+          "properties": {
+            "repository": {"type": "string", "minLength": 1},
+            "install_url": {"type": "string", "minLength": 1}
+          }
+        },
+        "management": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "provider"],
+          "properties": {
+            "mode": {"const": "external"},
+            "provider": {"type": "string", "minLength": 1}
+          }
+        },
+        "integration": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["entry_skill", "selection_hint"],
+          "properties": {
+            "entry_skill": {"type": "string", "minLength": 1},
+            "selection_hint": {"type": "string", "minLength": 20}
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"kind": {"const": "asset_pack"}}},
+          "then": {"required": ["source", "manifest_path"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "external_integration"}}},
+          "then": {"required": ["upstream", "management", "integration"]}
+        }
+      ]
+    }
+  }
+}

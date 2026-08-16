@@ -1,0 +1,43 @@
+# User Source Preferences - 用户资源来源偏好
+# 用途：
+# - 在不污染全局来源池的前提下，为不同用户/团队/任务类型收敛搜索范围
+# - 支持白名单、黑名单、标签偏好、类型偏好和优先级加权
+#
+# 生效顺序建议：
+# 1. 先读取 source-registry.yaml 作为全局来源池
+# 2. 再读取本文件，对来源进行过滤、加权和补充
+# 3. 最终得到本次搜索的 Effective Sources（有效来源集合）
+#
+# 说明：
+# - enabled_sources: 仅保留这些来源（为空表示不启用白名单）
+# - disabled_sources: 明确排除的来源
+# - preferred_types: 对来源类型设置偏好顺序
+# - priority_boost: 对特定来源附加权重，范围建议 -3 ~ +3
+# - scenario_profiles: 针对具体场景进一步收敛来源
+
+user_preferences:
+  enabled_sources: []
+  disabled_sources: []
+  preferred_types: []
+  priority_boost: {}
+
+scenario_profiles:
+  skill_discovery:
+    enabled_sources: []
+    disabled_sources: []
+    preferred_types:
+      - marketplace
+      - github
+    priority_boost: {}
+
+  spec_driven_development:
+    enabled_sources:
+      - GitHub Spec Kit
+      - OpenSpec
+      - cc-sdd
+    disabled_sources: []
+    preferred_types:
+      - github
+    priority_boost:
+      GitHub Spec Kit: 2
+      OpenSpec: 1

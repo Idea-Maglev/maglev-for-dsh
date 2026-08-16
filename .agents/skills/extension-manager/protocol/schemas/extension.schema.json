@@ -1,0 +1,307 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://maglev.local/schemas/extension.schema.json",
+  "title": "Maglev Extension Manifest",
+  "description": "Schema for extension.yaml files consumed by Maglev extension-manager.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "name",
+    "version",
+    "summary",
+    "kind",
+    "contents"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240
+    },
+    "kind": {
+      "type": "string",
+      "const": "capability_pack"
+    },
+    "maturity": {
+      "type": "string",
+      "enum": [
+        "official_recommended",
+        "experimental",
+        "team_internal"
+      ]
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maglev_min_version": {
+          "type": "string"
+        },
+        "maglev_max_version": {
+          "type": "string"
+        }
+      }
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "contents": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "skills": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/skill_asset"
+          }
+        },
+        "docs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/path_asset"
+          }
+        },
+        "templates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/path_asset"
+          }
+        },
+        "validators": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/path_asset"
+          }
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/path_asset"
+          }
+        },
+        "scripts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/path_asset"
+          }
+        }
+      }
+    },
+    "plugin_slots": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/plugin_slot"
+      }
+    },
+    "activation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default_enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required_files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/relative_path"
+          }
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "schema",
+              "references",
+              "install_conflicts",
+              "agent_consumability",
+              "slot_registration"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "^(?:/|[A-Za-z]:|https?://)"
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "git",
+            "local"
+          ]
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "$ref": "#/$defs/relative_path"
+        },
+        "manifest_path": {
+          "$ref": "#/$defs/relative_path"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "git"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "url"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "local"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "path"
+            ]
+          }
+        }
+      ]
+    },
+    "skill_asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "source",
+        "install_to"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{1,80}[a-z0-9]$"
+        },
+        "source": {
+          "$ref": "#/$defs/relative_path"
+        },
+        "install_to": {
+          "$ref": "#/$defs/relative_path"
+        },
+        "exposure": {
+          "type": "string",
+          "enum": [
+            "enabled",
+            "installed",
+            "hidden"
+          ]
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "path_asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/relative_path"
+        },
+        "install_to": {
+          "$ref": "#/$defs/relative_path"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "plugin_slot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot",
+        "entry_skill",
+        "selection_hint"
+      ],
+      "properties": {
+        "slot": {
+          "type": "string",
+          "enum": [
+            "code-execution"
+          ]
+        },
+        "entry_skill": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{1,80}[a-z0-9]$"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 50
+        },
+        "selection_hint": {
+          "type": "string",
+          "minLength": 20
+        },
+        "fallback": {
+          "type": "string",
+          "enum": [
+            "maglev-default"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "profile_id": "maglev-core-v1",
+  "layout_version": 1,
+  "profile_scope": "maglev",
+  "root_entries": [
+    "00_profile.yaml",
+    "README.md",
+    "INDEX.md",
+    "glossary.md",
+    "positioning.md"
+  ],
+  "domains": [
+    "collaboration-lifecycle",
+    "governance-quality",
+    "reality-knowledge",
+    "skill-runtime",
+    "delivery-runtime",
+    "adoption-integration",
+    "capability-evolution"
+  ],
+  "domain_entry_files": [
+    "README.md",
+    "capability/INDEX.md",
+    "implementation/INDEX.md",
+    "interfaces/INDEX.md",
+    "operations/INDEX.md",
+    "verification/INDEX.md",
+    "evidence/INDEX.md"
+  ],
+  "crosscutting_entry_files": [
+    "README.md",
+    "repository-map/INDEX.md",
+    "interfaces/INDEX.md",
+    "evidence/INDEX.md",
+    "risks/INDEX.md"
+  ],
+  "knowledge_statuses": [
+    "established",
+    "unknown",
+    "not_established",
+    "not_applicable"
+  ],
+  "slot_entry_contract": {
+    "required_fields": [
+      "knowledge_status",
+      "evidence_refs"
+    ],
+    "not_applicable_requires_evidence": true
+  },
+  "document_registry": {
+    "scope": "additional_markdown_pages_only",
+    "required_fields": [
+      "path",
+      "owner_domain",
+      "owner_slot",
+      "purpose",
+      "knowledge_status",
+      "evidence_refs"
+    ],
+    "owner_slots": [
+      "capability",
+      "implementation",
+      "interfaces",
+      "operations",
+      "verification",
+      "evidence"
+    ],
+    "crosscutting_slots": [
+      "repository-map",
+      "interfaces",
+      "evidence",
+      "risks"
+    ],
+    "not_applicable_requires_evidence": true
+  },
+  "state_file_registry": {
+    "required_fields": [
+      "path",
+      "owner_domain",
+      "owner_slot",
+      "purpose"
+    ],
+    "owner_slots": [
+      "capability",
+      "implementation",
+      "interfaces",
+      "operations",
+      "verification",
+      "evidence"
+    ]
+  },
+  "documents": [],
+  "state_files": [],
+  "index": {
+    "track_id": "specs",
+    "owner": "index-librarian",
+    "manual_index_writes": false
+  },
+  "extension_policy": {
+    "requires_profile_version_bump": true,
+    "requires_migration": true
+  },
+  "migration": {
+    "state": "not_required",
+    "legacy_paths": []
+  }
+}

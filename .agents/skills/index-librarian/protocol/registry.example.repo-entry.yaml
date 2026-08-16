@@ -1,0 +1,27 @@
+# registry.yaml track 模板 — type=repo-entry
+# 用途: 仅扫仓库根锚点文件（README/AGENTS/Makefile 等），生成入口图
+# 用法: 复制以下条目到你的 registry.yaml `tracks:` 列表末尾，按需调整字段
+
+# AI 助手提示: 使用本模板时直接抄下面字段即可。
+# repo-entry 强制 depth_limit=1（D8 硬约束），即使你写更大数也会被脚本钳到 1。
+
+tracks:
+  - id: my-repo-entry                    # 必填 — 用户可改为业务名（kebab-case）
+    type: repo-entry                     # 必填 — 固定为 repo-entry
+    root: .                              # 必填 — 通常为 repo 根
+    depth_limit: 1                       # 强制硬约束 — 写其他值会被钳到 1（D8）
+    patterns:                            # 可选 — 锚点文件 glob（默认见下方注释）
+      - "README.md"
+      - "AGENTS.md"
+      - "llms.txt"
+      - "CHANGELOG.md"
+      - "package.json"
+      - "*.toml"
+      - "Makefile"
+      - "Dockerfile"
+    output: .agents/_meta/repo-entry.yaml  # 可选 — 索引产物落点
+
+# 字段说明:
+# - depth_limit=1 是硬约束（防止误扫仓库代码）
+# - patterns 默认覆盖标准锚点；用户可裁剪/扩展，但应保持锚点性质（不要塞 *.py / src/**/*）
+# - 若你想索引代码仓库的内部结构，请使用 type=code-tree 而非扩张 patterns

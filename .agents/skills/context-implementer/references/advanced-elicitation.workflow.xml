@@ -1,0 +1,115 @@
+<task id="_bmad/core/workflows/advanced-elicitation/workflow.xml" name="Advanced Elicitation" standalone="true"
+  methods="{project-root}/_bmad/core/workflows/advanced-elicitation/methods.csv"
+  agent-party="{project-root}/_bmad/_config/agent-manifest.csv">
+  <llm critical="true">
+    <i>强制性：严格按照顺序执行流程部分中的所有步骤</i>
+    <i>不要跳过步骤或更改顺序</i>
+    <i>当满足停止条件时立即停止</i>
+    <i>步骤 xml 标记内的每个操作 xml 标记都是完成该步骤的必需操作</i>
+    <i>流程外的部分（验证、输出、关键上下文）提供必要的上下文 - 在整个执行过程中审查并应用</i>
+    <i>你必须始终使用 `communication_language` 设置的 Agent 沟通风格进行输出</i>
+  </llm>
+
+  <integration description="When called from workflow">
+    <desc>当在模板工作流处理期间调用时：</desc>
+    <i>1. 接收或审查刚刚生成的当前部分内容，或</i>
+    <i>2. 迭代应用诱导方法以增强该特定内容</i>
+    <i>3. 当用户选择 'x' 继续并返回时，返回增强版本</i>
+    <i>4. 增强内容将替换输出文档中的原始部分内容</i>
+  </integration>
+
+  <flow>
+    <step n="1" title="Method Registry Loading">
+      <action>Load and read {{methods}} and {{agent-party}}</action>
+
+      <csv-structure>
+        <i>category: Method grouping (core, structural, risk, etc.)</i>
+        <i>method_name: Display name for the method</i>
+        <i>description: Rich explanation of what the method does, when to use it, and why it's valuable</i>
+        <i>output_pattern: Flexible flow guide using → arrows (e.g., "analysis → insights → action")</i>
+      </csv-structure>
+
+      <context-analysis>
+        <i>Use conversation history</i>
+        <i>Analyze: content type, complexity, stakeholder needs, risk level, and creative potential</i>
+      </context-analysis>
+
+      <smart-selection>
+        <i>1. Analyze context: Content type, complexity, stakeholder needs, risk level, creative potential</i>
+        <i>2. Parse descriptions: Understand each method's purpose from the rich descriptions in CSV</i>
+        <i>3. Select 5 methods: Choose methods that best match the context based on their descriptions</i>
+        <i>4. Balance approach: Include mix of foundational and specialized techniques as appropriate</i>
+      </smart-selection>
+    </step>
+
+    <step n="2" title="Present Options and Handle Responses">
+
+      <format>
+        **高级诱导选项 (如果你启动了派对模式，他们将随机参与)**
+        选择一个数字 (1-5)，[r] 重新洗牌，[a] 列出所有，或 [x] 继续：
+
+        1. [Method Name]
+        2. [Method Name]
+        3. [Method Name]
+        4. [Method Name]
+        5. [Method Name]
+        r. 重新洗牌，列出 5 个新选项
+        a. 列出所有方法及其描述
+        x. 继续 / 无进一步操作
+      </format>
+
+      <response-handling>
+        <case n="1-5">
+          <i>使用 CSV 中的描述执行所选方法</i>
+          <i>根据当前上下文调整方法的复杂性和输出格式</i>
+          <i>创造性地将方法应用于正在增强的当前部分内容</i>
+          <i>显示增强版本，展示该方法揭示或改进的内容</i>
+          <i>关键：询问用户是否愿意将更改应用于文档 (y/n/其他) 并停止等待响应。</i>
+          <i>关键：仅当是时，应用更改。如果否，丢弃拟议更改的记忆。如果是任何其他回复，尽量遵循用户给出的指示。</i>
+          <i>关键：重新呈现相同的 1-5,r,x 提示以允许额外的诱导</i>
+        </case>
+        <case n="r">
+          <i>从 advanced-elicitation-methods.csv 中随机选择 5 种方法，使用相同的提示格式呈现新列表</i>
+          <i>选择时，尝试思考并挑选涵盖不同类别和方法的多样化方法集，其中 1 和 2 可能对正在发现的文档或部分最有用</i>
+        </case>
+        <case n="x">
+          <i>完成诱导并继续</i>
+          <i>将完全增强的内容返回给 create-doc.md</i>
+          <i>增强内容成为该部分的最终版本</i>
+          <i>向 create-doc.md 发送完成信号以继续下一部分</i>
+        </case>
+        <case n="a">
+          <i>在紧凑的表格中列出所有方法及其来自 CSV 的描述</i>
+          <i>允许用户按名称或编号从完整列表中选择任何方法</i>
+          <i>选择后，按上述 n="1-5" 案例所述执行方法</i>
+        </case>
+        <case n="direct-feedback">
+          <i>将更改应用于当前部分内容并重新呈现选择</i>
+        </case>
+        <case n="multiple-numbers">
+          <i>按顺序对内容执行方法，然后重新提供选择</i>
+        </case>
+      </response-handling>
+    </step>
+
+    <step n="3" title="Execution Guidelines">
+      <i>Method execution: Use the description from CSV to understand and apply each method</i>
+      <i>Output pattern: Use the pattern as a flexible guide (e.g., "paths → evaluation → selection")</i>
+      <i>Dynamic adaptation: Adjust complexity based on content needs (simple to sophisticated)</i>
+      <i>Creative application: Interpret methods flexibly based on context while maintaining pattern consistency</i>
+      <i>Focus on actionable insights</i>
+      <i>Stay relevant: Tie elicitation to specific content being analyzed (the current section from the document being created unless user
+        indicates otherwise)</i>
+      <i>Identify personas: For single or multi-persona methods, clearly identify viewpoints, and use party members if available in memory
+        already</i>
+      <i>Critical loop behavior: Always re-offer the 1-5,r,a,x choices after each method execution</i>
+      <i>Continue until user selects 'x' to proceed with enhanced content, confirm or ask the user what should be accepted from the session</i>
+      <i>Each method application builds upon previous enhancements</i>
+      <i>Content preservation: Track all enhancements made during elicitation</i>
+      <i>Iterative enhancement: Each selected method (1-5) should:</i>
+      <i> 1. Apply to the current enhanced version of the content</i>
+      <i> 2. Show the improvements made</i>
+      <i> 3. Return to the prompt for additional elicitations or completion</i>
+    </step>
+  </flow>
+</task>

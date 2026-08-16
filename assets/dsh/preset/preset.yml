@@ -1,0 +1,3 @@
+name: Maglev 对齐模式
+description: 遵循 Maglev for DSH 研发对齐方法的编码 Agent：spec-first（收敛→设计→验证→结晶），自动发现 .agents/skills 下的 Maglev 技能，计划阶段按 Observe Before Act 原则先收敛需求再设计。
+order: 2

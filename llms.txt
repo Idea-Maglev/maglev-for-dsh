@@ -1,0 +1,9 @@
+# Maglev for DSH
+
+> 🔴 会话纪律：进入主流程前必须读取 `.agents/skills/maglev-discipline/SKILL.md` 并遵循其红线协议。
+
+Maglev for DSH 是 Maglev 面向 dsh 的独立插件制品——固化 29 个技能 + host/client 插件（spec 工具、Maglev GUI）。
+
+- 知识资产：`specs/`（当前事实/演进/归档三层）+ `docs/thinking/`（决策逻辑）
+- 主链路：entry-router → reality-sync → requirement-convergence → spec-designer → 实施 → integrated-validator → crystallization
+- 自证：本仓库本身通过 Maglev 机制构建与治理（dogfooding）

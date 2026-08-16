@@ -1,0 +1,31 @@
+# registry.yaml track template - type=dir-tree
+# Purpose: create adjacent INDEX.md knowledge navigation for a directory tree.
+# Project-wide directory ignores belong in .maglev/config.json, not this track.
+
+tracks:
+  - id: my-knowledge
+    type: dir-tree
+    root: docs/
+    output: docs/_meta/index.yaml
+    entity_type: document
+    child_type: auto
+    max_depth: 4
+    # Optional: omit only these directories' own INDEX.md; descendants remain indexed.
+    skip_index_dirs:
+      - .
+    # Optional: additional directory names ignored only by this track.
+    ignore:
+      - _meta
+    # Optional: explicit glob patterns for single-file leaf directories that
+    # should collapse into their parent INDEX record instead of keeping their own.
+    # collapse_single_file_dirs:
+    #   - "marketing/assets/*"
+
+# Project-wide defaults live in .maglev/config.json:
+# {
+#   "indexing": {
+#     "ignore_dirs": [".agent", ".claude", ".codex", ".github"],
+#     "ignore_hidden_dirs": true,
+#     "inherit_gitignore": true
+#   }
+# }

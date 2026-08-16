@@ -1,0 +1,153 @@
+# 思考位段 canonical 数据
+# 这是 Maglev 思考分类方法论（"记忆宫殿"）的权威定义。
+# knowledge-check skill 在判断"某条思考应归到哪个位段"时直接消费本文件。
+# 任何项目实例（如 docs/thinking/INDEX.md）的 segments 字段应以本文件为准。
+#
+# 字段约束（与 index-librarian 的 schema 保持兼容）:
+#   id: 必填，格式 \d{2}_[a-z_]+
+#   room_name: 必填，中文房间隐喻
+#   description: 必填，一句话用途
+#   status: active | draft | archived
+#   scope_in: 该位段应放什么内容
+#   scope_out: 不应放进该位段的内容（互斥关系）
+#   examples: 该位段的典型样本
+
+canonical_version: "1.0"
+last_updated: "2026-04-29"
+
+segments:
+  - id: 00_meta
+    room_name: 元厅
+    description: 模块元信息、入口与导航
+    status: active
+    scope_in:
+      - 思考体系自身的入口/导航说明
+      - 全域抽象的范式总览
+      - 跨位段的元规则与方法论本体
+    scope_out:
+      - 具体某次反思（属 70_retrospective）
+      - 具体一篇架构设计（属 20_architecture）
+    examples:
+      - meta_paradigm_analysis
+      - atomizer_uncertainty_principle
+      - transparency_as_feature
+
+  - id: 10_critique
+    room_name: 批判间
+    description: 反思、对抗与质疑性分析
+    status: active
+    scope_in:
+      - 对自身方案的反向挑战、蓝军视角
+      - 对外部范式的批判性对比
+      - 系统性质疑（不是单次复盘）
+    scope_out:
+      - 单次迭代闭环的复盘（属 70_retrospective）
+      - 中立的范式对比（属 50_alignment）
+    examples:
+      - maglev_vs_harness_engineering（批判性视角时）
+
+  - id: 20_architecture
+    room_name: 架构间
+    description: 系统结构、分层与边界设计
+    status: active
+    scope_in:
+      - 系统结构图、分层模型、边界判定
+      - 长期架构决策的依据文档
+      - 跨模块的结构升级方案
+    scope_out:
+      - 范式根基/第一性原理（属 30_philosophy）
+      - 单次实施细节（不进 thinking）
+    examples:
+      - lifecycle_layer_boundary
+      - release_notes_delivery_boundary
+      - extension_point_architecture
+
+  - id: 30_philosophy
+    room_name: 哲学殿
+    description: 范式根基、第一性原理与方程式表达
+    status: active
+    scope_in:
+      - 范式宣言、第一性原理推导
+      - 方程式/公式化表达
+      - 不可证伪的根基性主张
+    scope_out:
+      - 可证伪的架构选择（属 20_architecture）
+      - 方法论操作步骤（不进 thinking）
+    examples:
+      - maglev_equation
+      - accuracy_and_correction_protocol
+      - bidirectional_context_protocol
+
+  - id: 40_paper
+    room_name: 论文阁
+    description: 学术对位、方法借鉴与理论引用
+    status: active
+    scope_in:
+      - 学术论文的引用与摘要
+      - 学术方法的借鉴与转译
+      - 理论流派的对位说明
+    scope_out:
+      - 工业产品对比（属 50_alignment）
+      - 自身范式宣言（属 30_philosophy）
+
+  - id: 50_alignment
+    room_name: 对标厅
+    description: 跨范式对比、生态对位与差异化定位
+    status: active
+    scope_in:
+      - 与同生态产品/范式的中立对比
+      - 差异化定位说明
+      - 兼容性/互通性分析
+    scope_out:
+      - 批判性挑战（属 10_critique）
+      - 学术理论引用（属 40_paper）
+    examples:
+      - maglev_vs_sdd
+      - maglev_vs_hermes_agent
+
+  - id: 60_case
+    room_name: 案例馆
+    description: 落地实例、试点与具体场景产出
+    status: active
+    scope_in:
+      - 具体项目/场景的应用记录
+      - 试点的过程与产出
+      - 单一案例的细节复刻
+    scope_out:
+      - 跨案例提炼的方法论（属 00_meta 或 20_architecture）
+      - 单次复盘（属 70_retrospective）
+
+  - id: 70_retrospective
+    room_name: 复盘室
+    description: 迭代闭环、决策回顾与经验提炼
+    status: active
+    scope_in:
+      - 单次迭代的 closeout / postmortem
+      - 决策回顾与经验提炼
+      - 反模式与教训沉淀
+    scope_out:
+      - 系统性批判（属 10_critique）
+      - 长期架构决策（属 20_architecture）
+    examples:
+      - distribution_iteration_closeout
+      - component_level_spec_decomposition_antipattern
+      - rebase-onto-skip-merge-pitfall
+      - skill-srp-no-project-mapping
+
+  - id: 90_archive
+    room_name: 归档库
+    description: 已被结晶/上位重写/退役的历史文档
+    status: active
+    scope_in:
+      - 已被新文档完整取代的旧版本
+      - 已结晶为现实的历史推演
+      - 已退役主题的过程记录
+    scope_out:
+      - 仍在使用的主题（应留在原位段）
+      - 当前现实（属项目的 reality 层或对应位段）
+
+# 状态语义（与 status 字段对应）
+status_meaning:
+  active: 该位段当前在用，新文档可入
+  draft: 位段定义在试运行，未稳定
+  archived: 位段已不再接受新文档，仅保留历史

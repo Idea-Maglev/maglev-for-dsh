@@ -1,0 +1,57 @@
+# llms.txt 最小草稿
+
+> 🔴 会话纪律：进入主流程前必须读取 `.agents/skills/maglev-discipline/SKILL.md` 并遵循其红线协议。
+
+> 你正在一个已接入 Maglev 的项目中工作。
+> 默认使用中文回答。
+
+## 1. 先理解当前项目
+
+- 先阅读项目 README、关键规格和当前任务相关目录。
+- 优先确认：
+  - 项目目标
+  - 关键目录
+  - 当前活跃任务或 issue
+
+## 2. 再理解 Maglev 入口
+
+<!-- maglev:managed:mainline -->
+当前主链路（由治理注册表生成）：
+
+- `entry-router`
+- `reality-sync`
+- `requirement-convergence`
+- `spec-designer`
+- 执行分支：`context-implementer` | `code-execution-slot`
+- `integrated-validator`
+- `crystallization`
+- 横切能力：`knowledge-check`
+<!-- /maglev:managed:mainline -->
+
+<!-- maglev:managed:compatibility -->
+兼容 workflow 入口（由治理注册表生成）：
+
+- `/standup` → `reality-sync`
+- `/create-spec` → `spec-designer`
+- `/quick-dev` → `context-implementer`
+- `/validate-all` → `integrated-validator`
+<!-- /maglev:managed:compatibility -->
+
+说明：
+
+- skill runtime name 是运行面真实对象名。
+- workflow / slash entry 是兼容入口名，两者可以不同，不应混淆。
+- 本地能力优先：项目内 `.agents/skills` 是本项目优先使用的 skill 来源；任务入口先经过 `entry-router`，代码交付物先经过 `code-execution-slot`。
+- 外部或全局 skill 只能在用户明确指定，或由 `code-execution-slot` 根据当前项目配置选择后使用。
+
+## 3. 初始化与升级
+
+- 项目首次接入时，关注 `init` / `maglev-bootstrapper`
+- 项目升级时，关注 `update` / `maglev-updater`
+- 如果 `AGENTS.md` 或 `llms.txt` 缺失、过时或引用旧 runtime name，应优先补齐 AI 上下文
+
+## 4. 最小行为约束
+
+- 改代码前先读相关规格和上下文。
+- 不要把上游 Maglev 源仓库的私有现实当成当前项目事实。
+- 如果信息不足，先说明缺口，再继续执行。

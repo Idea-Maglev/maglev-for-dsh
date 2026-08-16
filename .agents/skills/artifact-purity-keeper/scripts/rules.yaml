@@ -1,0 +1,75 @@
+version: 1
+description: |
+  AI 协作产物洁净度扫描器 — 默认规则集 v0.1
+  种子规则来自实战污染样本.
+  按 severity 分级: hard(🔴) / soft(🟡) / info(🔵)
+
+rules:
+  # === HARD: 绝对应剥离的会话符号 ===
+  - id: dialog-reference
+    severity: hard
+    category: 对话指代
+    description: 第一/第二人称对话指代, 假设读者就是当前对话者
+    pattern: '(你说的|你提到的?|按你要求|按您要求|我建议|我们刚才|您所说)'
+
+  - id: iteration-tag
+    severity: hard
+    category: 迭代叙事
+    description: 版本迭代/修订标签, 如 v5.2 (fix) / R1→R2
+    pattern: '(v\d+(\.\d+)?\s*\((fix|修订|重写|consistency.*?fix)\)|R\d+\s*[→\-]>\s*R\d+|fix\d+\s*[→\-]>\s*fix\d+)'
+
+  - id: collab-narrative
+    severity: hard
+    category: 协作叙事
+    description: 描述协作过程的叙事, 读者不在场
+    pattern: '(经讨论决定|踩坑后|考虑过.{0,10}但选|修订后|重写后|经修订|经反思)'
+
+  # === SOFT: 内部编号/相对时间, 视语境保留或剥离 ===
+  - id: process-code
+    severity: soft
+    category: 过程编号
+    description: spec/流程内部编号 (AC/D/Step/Gate/Phase), 出现在用户面文档时是污染
+    pattern: '(\(?\bAC-[A-Z]?\d+(-\d+)?\)?|\(D\d+(\s*[—\-]\s*\S+)?\)|\bStep \d+\b|\bGate Pass\b|\bPhase \d+\b)'
+    # 默认白名单: 仅排除 skill 自家的 step / workflow 定义文档（这些文件中 Step/Phase 编号是协议命名而非污染）。
+    # 项目特定的"内部协作面"路径（如 spec 草稿、归档历史等）应由调用方通过 --exclude 或自定义规则集追加。
+    exclude_paths:
+      - '\.agents/skills/.*/references/step-\d+.*\.md'
+      - '\.agents/skills/.*/references/.*\.workflow\.md'
+
+  - id: relative-time
+    severity: soft
+    category: 时间相对词
+    description: 时间相对词预设读者与作者同步在场
+    pattern: '(刚才|上次|本轮|先前(?!.{0,3}研究)|前面提到|前一(轮|版))'
+
+  - id: change-date-narrative
+    severity: soft
+    category: 变更日期叙事
+    description: "YYYY-MM-DD + 取代/废弃/撤回/引入: 把变更动作当成事实, 应改为当前状态描述"
+    pattern: '\b20\d{2}-\d{2}-\d{2}.{0,15}(取代|废弃|撤回|引入)'
+
+  - id: narrative-shift
+    severity: soft
+    category: 状态变迁叙事
+    description: 把变更日志/状态变迁叙事塞进稳定文档 (不再只是 / 已切换为 / 已确认 / 仍保留 / 现已 / 已经进入...阶段)
+    pattern: '(不再只是|不再仅仅?|已切换为|已确认[:：]|仍保留(?!.{0,5}给)|现已[切改弃替]|已经进入.{0,15}阶段|过去.{0,8}现在|从前.{0,10}现在)'
+
+  # === INFO: 风险较低但建议留意 ===
+  - id: confirm-phrase
+    severity: info
+    category: 确认句式
+    description: 假设读者了解前文的确认句式
+    pattern: '(如前所述|如您所知|按您所说|按您所述)'
+
+# 默认排除路径 (任何规则都不扫): 仅含通用工程产物目录, 不含任何项目特定路径
+default_exclude_paths:
+  - 'node_modules/'
+  - 'dist/'
+  - '.git/'
+
+# 默认仅扫文本类
+default_extensions:
+  - '.md'
+  - '.txt'
+  - '.yaml'
+  - '.yml'

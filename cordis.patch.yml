@@ -1,0 +1,12 @@
+# Maglev for DSH — bundle patch layer
+#
+# 本 bundle 向 dsh 组合插入 Maglev 的 host 插件行。
+# 插件（index.js）注册：maglev_spec_check 工具 + maglev_crystallize 工具（产生结晶事件）。
+#
+# 说明：技能发现无需本 patch —— dsh 的 skill-filesystem 原生扫描
+# <projectRoot>/.agents/skills（本包 .agents/skills 下的 29 技能会被自动发现）。
+# 本 patch 只负责注册技能之外的 host 能力（spec 工具、结晶事件）。
+
+- insert:
+    - id: maglev-host
+      name: '@idea-maglev/maglev-for-dsh'

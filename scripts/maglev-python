@@ -1,0 +1,210 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+MIN_PYTHON_VERSION="${MAGLEV_PYTHON_VERSION:-3.11}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+VENV_DIR="${MAGLEV_PYTHON_VENV:-${REPO_ROOT}/.maglev/runtime/python}"
+REQUIREMENTS_FILE="${MAGLEV_PYTHON_REQUIREMENTS:-${REPO_ROOT}/.agents/skills/index-librarian/protocol/requirements.txt}"
+
+usage() {
+  cat <<USAGE
+Usage:
+  scripts/maglev-python [--doctor] [--check] [--] <script.py> [args...]
+
+Runs Maglev protocol Python scripts in a repo-local managed environment.
+
+Environment:
+  MAGLEV_PYTHON_VERSION       Python version to provision (default: 3.11)
+  MAGLEV_PYTHON_VENV          Virtualenv path (default: .maglev/runtime/python)
+  MAGLEV_PYTHON_REQUIREMENTS  Requirements file (default: index-librarian protocol requirements)
+  MAGLEV_UV                   Explicit uv binary path
+USAGE
+}
+
+find_uv() {
+  if [[ -n "${MAGLEV_UV:-}" && -x "${MAGLEV_UV}" ]]; then
+    printf '%s\n' "${MAGLEV_UV}"
+    return 0
+  fi
+
+  if command -v uv >/dev/null 2>&1; then
+    command -v uv
+    return 0
+  fi
+
+  for candidate in \
+    "${HOME:-}/.local/bin/uv" \
+    "${HOME:-}/.cargo/bin/uv" \
+    "/opt/homebrew/bin/uv" \
+    "/usr/local/bin/uv"; do
+    if [[ -n "${candidate}" && -x "${candidate}" ]]; then
+      printf '%s\n' "${candidate}"
+      return 0
+    fi
+  done
+  return 1
+}
+
+python_version_ok() {
+  local py_bin="$1"
+  "${py_bin}" - "${MIN_PYTHON_VERSION}" <<'PY'
+import sys
+want = tuple(int(part) for part in sys.argv[1].split('.')[:2])
+have = sys.version_info[:2]
+sys.exit(0 if have >= want else 1)
+PY
+}
+
+find_system_python() {
+  local candidates=("python${MIN_PYTHON_VERSION}" python3.12 python3.11 python3 python)
+  local candidate
+  for candidate in "${candidates[@]}"; do
+    if command -v "${candidate}" >/dev/null 2>&1; then
+      local py_bin
+      py_bin="$(command -v "${candidate}")"
+      if python_version_ok "${py_bin}"; then
+        printf '%s\n' "${py_bin}"
+        return 0
+      fi
+    fi
+  done
+  return 1
+}
+
+venv_python() {
+  if [[ -x "${VENV_DIR}/bin/python" ]]; then
+    printf '%s\n' "${VENV_DIR}/bin/python"
+    return 0
+  fi
+  if [[ -x "${VENV_DIR}/Scripts/python.exe" ]]; then
+    printf '%s\n' "${VENV_DIR}/Scripts/python.exe"
+    return 0
+  fi
+  return 1
+}
+
+ensure_with_uv() {
+  local uv_bin="$1"
+  local existing_py=""
+  existing_py="$(venv_python || true)"
+  if [[ -n "${existing_py}" ]] && python_version_ok "${existing_py}"; then
+    :
+  elif [[ ! -d "${VENV_DIR}" ]]; then
+    "${uv_bin}" python install "${MIN_PYTHON_VERSION}" >/dev/null
+    "${uv_bin}" venv --python "${MIN_PYTHON_VERSION}" "${VENV_DIR}" >/dev/null
+  else
+    rm -rf "${VENV_DIR}"
+    "${uv_bin}" python install "${MIN_PYTHON_VERSION}" >/dev/null
+    "${uv_bin}" venv --python "${MIN_PYTHON_VERSION}" "${VENV_DIR}" >/dev/null
+  fi
+  local py_bin
+  py_bin="$(venv_python)"
+  if [[ -f "${REQUIREMENTS_FILE}" ]]; then
+    "${uv_bin}" pip install --python "${py_bin}" -r "${REQUIREMENTS_FILE}" >/dev/null
+  fi
+}
+
+ensure_with_system_python() {
+  local py_bin="$1"
+  if [[ ! -d "${VENV_DIR}" ]]; then
+    "${py_bin}" -m venv "${VENV_DIR}"
+  fi
+  local managed_py
+  managed_py="$(venv_python)"
+  if [[ -f "${REQUIREMENTS_FILE}" ]]; then
+    "${managed_py}" -m pip install -r "${REQUIREMENTS_FILE}" >/dev/null
+  fi
+}
+
+ensure_runtime() {
+  local uv_bin=""
+  if uv_bin="$(find_uv)"; then
+    ensure_with_uv "${uv_bin}"
+  else
+    local py_bin
+    if ! py_bin="$(find_system_python)"; then
+      cat >&2 <<ERR
+[maglev-python] env_failed: Python >= ${MIN_PYTHON_VERSION} is required.
+Install uv or Python >= ${MIN_PYTHON_VERSION}, then retry:
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+ERR
+      return 2
+    fi
+    ensure_with_system_python "${py_bin}"
+  fi
+
+  local managed_py
+  managed_py="$(venv_python)"
+  if ! python_version_ok "${managed_py}"; then
+    echo "[maglev-python] env_failed: managed Python does not satisfy >= ${MIN_PYTHON_VERSION}: ${managed_py}" >&2
+    return 2
+  fi
+}
+
+print_doctor() {
+  local uv_bin="not found"
+  if uv_bin="$(find_uv)"; then :; fi
+  local managed_py="not created"
+  if managed_py="$(venv_python)"; then :; fi
+
+  echo "[maglev-python] doctor"
+  echo "  repo_root: ${REPO_ROOT}"
+  echo "  uv: ${uv_bin}"
+  echo "  venv: ${VENV_DIR}"
+  echo "  python: ${managed_py}"
+  echo "  requirements: ${REQUIREMENTS_FILE}"
+  if [[ "${managed_py}" != "not created" ]]; then
+    "${managed_py}" --version | sed 's/^/  version: /'
+  fi
+}
+
+MODE="run"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --doctor)
+      MODE="doctor"
+      shift
+      ;;
+    --check)
+      MODE="check"
+      shift
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if [[ "${MODE}" == "check" ]]; then
+  print_doctor
+  managed_py="$(venv_python || true)"
+  if [[ -n "${managed_py}" && "${managed_py}" != "not created" ]] && python_version_ok "${managed_py}"; then
+    exit 0
+  fi
+  echo "[maglev-python] env_failed: runtime is not bootstrapped or version is too old" >&2
+  exit 2
+fi
+
+ensure_runtime
+
+if [[ "${MODE}" == "doctor" ]]; then
+  print_doctor
+  exit 0
+fi
+
+if [[ $# -lt 1 ]]; then
+  usage >&2
+  exit 2
+fi
+
+PYTHON_BIN="$(venv_python)"
+exec "${PYTHON_BIN}" "$@"
