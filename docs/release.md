@@ -1,12 +1,19 @@
 # Maglev for DSH — 发布操作手册
 
-> 面向维护者。发布 = GitHub 建仓（源码/文档入口）+ npm 发布（分发）。两者都要。
+> 面向维护者。发布 = GitHub 仓库（源码/文档入口）+ npm 发布（分发）。两者都要。
+
+## 仓库与历史
+
+- **公开仓库**：`Idea-Maglev/maglev-for-dsh`（GitHub，Public）—— 发布权威源
+- **历史策略**：公开仓库从**干净的初始提交**开始（`2c263b6`），**不继承**派生自公司私域 GitLab（`git.nevint.com`）的历史——旧历史含私域 URL，公开仓库从独立演进起点开始
+- **私域仓库**（`git.nevint.com`）：不再是发布目标；仅作内部备份保留，不参与公开流程
 
 ## 前置条件
 
 - npm 账号，且是 `@idea-maglev` 组织成员（`npm login` 已验证）
-- GitHub 账号，且在 `Idea-Maglev` 组织有建仓权限
+- GitHub 账号，且在 `Idea-Maglev` 组织有仓库权限
 - 本地已 `pnpm install`（仓库根目录）
+- `~/.npmrc` 有 scope 配置（见下文「安装（用户侧）」）
 
 ## 发布流程
 
@@ -29,36 +36,27 @@ pnpm pack --pack-destination /tmp/
 tar -tzf /tmp/idea-maglev-maglev-for-dsh-*.tgz   # 确认含 index.mjs / client.js / .agents/ / LICENSE
 ```
 
-### 3. 提交 + 打 tag
+### 3. 提交 + 推送 + 打 tag
 
 ```bash
-git add -A && git commit -m "chore: 发布准备（0.1.0）"
-git tag v0.1.0
+git add -A && git commit -m "..."               # 功能/修复提交
+git push -u origin main                        # 推到 GitHub（main 分支）
+git tag v0.1.1 && git push origin v0.1.1        # 版本 tag（GitHub Release 用它）
 ```
 
-### 4. GitHub 建仓并推送
-
-1. 在 `Idea-Maglev` 组织下创建仓库 `maglev-for-dsh`（Public，MIT license）
-2. 推送：
+### 4. npm 发布
 
 ```bash
-git remote add origin git@github.com:Idea-Maglev/maglev-for-dsh.git
-git push -u origin master --tags
-```
-
-### 5. npm 发布
-
-```bash
-npm login
+npm login --registry=https://registry.npmjs.org/
 npm publish --access public
 ```
 
-（`package.json` 已配 `publishConfig.access: public`，scope 包默认公开。）
+（`package.json` 已配 `publishConfig.access: public`，scope 包默认公开；项目 `.npmrc` 已配 `@idea-maglev:registry` 走公域。）
 
-### 6. 发布后验证（必须做）
+### 5. 发布后验证（必须做）
 
 ```bash
-# 在任意干净目录建一个测试 profile，从 registry 安装
+# 在任意干净目录建一个测试 profile，从公域 registry 安装
 dsh plugin --profile verify add @idea-maglev/maglev-for-dsh
 dsh --profile verify "请调用 maglev_reality_status 工具，一句话报告结果"
 # 期望：工具调用成功，exit 0
@@ -73,7 +71,7 @@ dsh --profile web --port 3100
 
 ## 版本管理
 
-- 语义化版本：`0.1.0` 起
+- 语义化版本：`0.1.0` 起（当前 0.1.1）
 - 改动后升版本：`npm version patch|minor|major`（自动打 tag）
 - 每次发版走「构建 → pack 检查 → commit/tag → push → publish → 验证」
 
@@ -85,6 +83,20 @@ dsh --profile web --port 3100
 | `Cannot find package 'maglev-for-dsh'` | `cordis.patch.yml` 的 `name` 必须与 `package.json` 的 `name` 一致（当前 `@idea-maglev/maglev-for-dsh`） |
 | 工具调度报 `reading 'prepare'` | 用户 profile 若存在 hoisted dsh-tools 且旧版本插件直接 import dsh-tools 会分裂。本插件 host 零依赖 dsh-tools（见 `docs/thinking/2026-08-15-dsh-tools-instance-split.md`），不受影响 |
 | scope 包发布 404/403 | 确认 `@idea-maglev` 组织存在且你有 publish 权限；`publishConfig.access: public` 已配 |
+| `dsh plugin add @idea-maglev/maglev-for-dsh` 报 404 / "not in the npm registry" | ① 确认 `~/.npmrc` 有 `@idea-maglev:registry=https://registry.npmjs.org/`；② 若 curl 能访问但 pnpm 报 404，是 pnpm metadata 缓存了失败结果，清缓存：`rm -rf ~/Library/Caches/pnpm/metadata` |
+| 安装到的版本不是最新（装到 0.1.0 而非 0.1.1） | pnpm ≥11.21 的 `minimumReleaseAge` 安全机制：新发布的版本短期内可能被排除。① 显式指定：`dsh plugin add @idea-maglev/maglev-for-dsh@0.1.1`；② 或等几天；③ pnpm 会把包写入 profile 的 `pnpm-workspace.yaml` 的 `minimumReleaseAgeExclude` 后恢复 latest |
+
+## 安装（用户侧）
+
+```bash
+# ~/.npmrc 加一行（scope 走公域，其他包不受影响）
+@idea-maglev:registry=https://registry.npmjs.org/
+
+# 安装到 profile
+dsh plugin --profile <name> add @idea-maglev/maglev-for-dsh
+```
+
+安装后：29 技能自动注入（任意项目可用）+ 3 个 spec 工具 + 结晶门禁 + Maglev GUI。
 
 ## 本地开发（link 模式）
 
