@@ -1,6 +1,6 @@
 {
   "name": "@idea-maglev/maglev-for-dsh",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Maglev for DSH: 面向 DeepSeek Harness 的研发对齐插件（29 技能 + spec 工具 + 结晶事件 + Maglev GUI）",
   "type": "module",
   "main": "lib/index.mjs",

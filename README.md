@@ -6,7 +6,7 @@
 
 一个**自包含的 dsh 插件**。装上它，dsh 就拥有：
 
-1. **29 个 Maglev 技能**：收敛 → 设计 → 验证 → 结晶主链路 + 治理纪律 + 知识沉淀，dsh 原生自动发现
+1. **29 个 Maglev 技能**：收敛 → 设计 → 验证 → 结晶主链路 + 治理纪律 + 知识沉淀。技能随插件**自动注入**（`maglev-bundled` provider），任意项目（无需本地 `.agents/skills`）都能发现并使用
 2. **Maglev GUI**：
    - **结晶卡片**：每次迭代沉淀了什么，以卡片形式弹在会话流里
    - **真相卡片**：AI 读到的项目现状（能力域/主题/契约状态），对人可见
@@ -56,7 +56,7 @@ dsh plugin add @idea-maglev/maglev-for-dsh
 - **dsh**：执行层宿主（agent harness），插件运行其上
 - **本仓库**：从 Maglev **一次性派生**的自包含插件制品，与 Maglev 源**零运行时依赖**，技能资产独立演进
 
-> 技术注记：本插件 host 侧**不直接依赖 `@deepseek-ai/dsh-tools`**（工具定义手动构造），避免 dsh-tools 多实例导致的工具调度器符号分裂（详见 `docs/thinking/2026-08-15-dsh-tools-instance-split.md`）。因此在任意 dsh 环境安装都不会与内置插件冲突。
+> 技术注记：本插件 host 侧**不直接依赖 `@deepseek-ai/dsh-tools`**（工具定义手动构造），避免 dsh-tools 多实例导致的工具调度器符号分裂（详见 `docs/thinking/2026-08-15-dsh-tools-instance-split.md`）。技能通过 `ctx.skills.registerProvider` 注入（dsh 的 bundled skill 机制，rank 600 低于项目技能，项目优先），因此任意环境安装即用。
 
 ## 自证原则（dogfooding）
 

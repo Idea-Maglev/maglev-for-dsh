@@ -14,6 +14,7 @@
 import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { constants } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 
 // 声明 maglev/crystallize 会话事件（供 client 渲染结晶卡片）
@@ -45,7 +46,14 @@ declare module '@deepseek-ai/dsh-session/types' {
 }
 
 export const name = 'maglev-host'
-export const inject = ['tools']
+export const inject = ['tools', 'skills']
+
+// 技能资产目录：本插件包内的 .agents/skills（host 编译产物在 lib/，技能在上一级）。
+// 通过 ctx.skills.registerProvider 注入，让 npm 安装后任何项目（无需本地 .agents/skills）
+// 都能发现 maglev 技能——解决"dsh 技能发现只扫项目根"的发布缺口。
+const PKG_SKILLS_DIR = fileURLToPath(new URL('../.agents/skills', import.meta.url))
+// dsh-skill 的 bundled 标准 rank（项目技能 rank 100-500，bundled 600 最不优先，项目优先）
+const BUNDLED_SKILL_RANK = 600
 
 // Maglev 知识分层骨架（相对项目根）
 const SPECS_SKELETON_DIRS = [
@@ -192,7 +200,117 @@ function requireParams(args: Record<string, unknown>, required: readonly string[
   }
 }
 
+// ---- 技能注入（让 npm 包内的 .agents/skills 对任意项目可用） ----
+
+/** 从 SKILL.md 解析 frontmatter 的 name/description 与正文（零依赖正则解析）。 */
+function parseSkillFile(text: string): { name?: string; description?: string; body: string } {
+  const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/)
+  if (!m) return { body: text }
+  let name: string | undefined
+  let description: string | undefined
+  for (const line of m[1].split(/\r?\n/)) {
+    const kv = line.match(/^name:\s*(.+)$/)
+    if (kv) name = kv[1].trim().replace(/^['"]|['"]$/g, '')
+    const dv = line.match(/^description:\s*(.+)$/)
+    if (dv) description = dv[1].trim().replace(/^['"]|['"]$/g, '')
+  }
+  return { name, description, body: text.slice(m[0].length) }
+}
+
+interface BundledSkillLocator { dir: string }
+interface BundledSkillCandidate {
+  name: string
+  description: string
+  invocation: { modelInvocable: boolean; userInvocable: boolean }
+  source: string
+  provider: string
+  rank: number
+  locator: BundledSkillLocator
+  path: string
+  resourceBase: { kind: 'directory'; path: string }
+}
+
+/** 列出本包内全部技能候选（跳过 `_` 开头的内部目录）。 */
+async function listBundledSkills(): Promise<readonly BundledSkillCandidate[]> {
+  let entries
+  try {
+    entries = await readdir(PKG_SKILLS_DIR, { withFileTypes: true })
+  } catch {
+    return []
+  }
+  const candidates: BundledSkillCandidate[] = []
+  for (const entry of entries) {
+    if (!entry.isDirectory() || entry.name.startsWith('_')) continue
+    const dir = join(PKG_SKILLS_DIR, entry.name)
+    const skillFile = join(dir, 'SKILL.md')
+    let text: string
+    try {
+      text = await readFile(skillFile, 'utf8')
+    } catch {
+      continue
+    }
+    const { name, description } = parseSkillFile(text)
+    if (!name || !description) continue
+    candidates.push({
+      name,
+      description,
+      invocation: { modelInvocable: true, userInvocable: true },
+      source: 'bundled',
+      provider: 'maglev-bundled',
+      rank: BUNDLED_SKILL_RANK,
+      locator: { dir },
+      path: skillFile,
+      resourceBase: { kind: 'directory', path: dir },
+    })
+  }
+  return candidates
+}
+
+/** 加载一个技能候选的完整正文（去掉 frontmatter），返回完整 SkillDefinition。 */
+async function getBundledSkill(candidate: {
+  name?: string
+  description?: string
+  invocation?: unknown
+  source?: string
+  provider?: string
+  resourceBase?: unknown
+  path?: string
+  locator?: BundledSkillLocator
+}): Promise<unknown> {
+  const dir = candidate?.locator?.dir
+  if (!dir || typeof candidate.name !== 'string' || typeof candidate.description !== 'string') return undefined
+  try {
+    const text = await readFile(join(dir, 'SKILL.md'), 'utf8')
+    const { body } = parseSkillFile(text)
+    return {
+      name: candidate.name,
+      description: candidate.description,
+      invocation: candidate.invocation ?? { modelInvocable: true, userInvocable: true },
+      source: candidate.source ?? 'bundled',
+      provider: candidate.provider ?? 'maglev-bundled',
+      resourceBase: candidate.resourceBase,
+      content: body,
+      path: candidate.path,
+    }
+  } catch {
+    return undefined
+  }
+}
+
 export function apply(ctx: Context): void {
+  // 技能注入：任何项目（无需本地 .agents/skills）都能发现 maglev 技能。
+  // ctx.skills 由 dsh-skill 服务提供；结构按 dsh 的 SkillProvider 接口。
+  try {
+    const skills = (ctx as unknown as { skills?: { registerProvider(p: unknown): unknown } }).skills
+    skills?.registerProvider(() => ({
+      name: 'maglev-bundled',
+      list: listBundledSkills,
+      get: getBundledSkill,
+    }))
+  } catch {
+    // 技能注册失败不阻断工具能力（降级：仅工具可用）
+  }
+
   ctx.tools.register({
     name: 'maglev_spec_check',
     description: '检查 Maglev 项目的 spec 完整性：specs 知识分层骨架、AGENTS.md 会话纪律区块、主链路技能、docs/thinking 决策记录（非空）是否齐全。交付前调用它作为机械验证门禁。',
