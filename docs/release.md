@@ -1,11 +1,17 @@
 # Maglev for DSH — 发布操作手册
 
-> 面向维护者。发布 = GitHub 建仓（源码/文档入口）+ npm 发布（分发）。两者都要。
+> 面向维护者。发布 = GitHub 仓库（源码/文档入口）+ npm 发布（分发）。两者都要。
+
+## 仓库与历史
+
+- **公开仓库**：`Idea-Maglev/maglev-for-dsh`（GitHub，Public）—— 发布权威源
+- **历史策略**：公开仓库从**干净的初始提交**开始（`2c263b6`），**不继承**派生自公司私域 GitLab（`git.nevint.com`）的历史——旧历史含私域 URL，公开仓库从独立演进起点开始
+- **私域仓库**（`git.nevint.com`）：不再是发布目标；仅作内部备份保留，不参与公开流程
 
 ## 前置条件
 
 - npm 账号，且是 `@idea-maglev` 组织成员（`npm login` 已验证）
-- GitHub 账号，且在 `Idea-Maglev` 组织有建仓权限
+- GitHub 账号，且在 `Idea-Maglev` 组织有仓库权限
 - 本地已 `pnpm install`（仓库根目录）
 
 ## 发布流程
@@ -29,24 +35,15 @@ pnpm pack --pack-destination /tmp/
 tar -tzf /tmp/idea-maglev-maglev-for-dsh-*.tgz   # 确认含 index.mjs / client.js / .agents/ / LICENSE
 ```
 
-### 3. 提交 + 打 tag
+### 3. 提交 + 推送 + 打 tag
 
 ```bash
-git add -A && git commit -m "chore: 发布准备（0.1.0）"
-git tag v0.1.0
+git add -A && git commit -m "..."               # 功能/修复提交
+git push -u origin master                       # 推到 GitHub
+git tag v0.1.0 && git push origin v0.1.0         # 版本 tag（GitHub Release 用它）
 ```
 
-### 4. GitHub 建仓并推送
-
-1. 在 `Idea-Maglev` 组织下创建仓库 `maglev-for-dsh`（Public，MIT license）
-2. 推送：
-
-```bash
-git remote add origin git@github.com:Idea-Maglev/maglev-for-dsh.git
-git push -u origin master --tags
-```
-
-### 5. npm 发布
+### 4. npm 发布
 
 ```bash
 npm login
@@ -55,7 +52,7 @@ npm publish --access public
 
 （`package.json` 已配 `publishConfig.access: public`，scope 包默认公开。）
 
-### 6. 发布后验证（必须做）
+### 5. 发布后验证（必须做）
 
 ```bash
 # 在任意干净目录建一个测试 profile，从 registry 安装
