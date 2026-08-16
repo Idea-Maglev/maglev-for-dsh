@@ -82,6 +82,18 @@ dsh --profile web --port 3100
 | `Cannot find package 'maglev-for-dsh'` | `cordis.patch.yml` 的 `name` 必须与 `package.json` 的 `name` 一致（当前 `@idea-maglev/maglev-for-dsh`） |
 | 工具调度报 `reading 'prepare'` | 用户 profile 若存在 hoisted dsh-tools 且旧版本插件直接 import dsh-tools 会分裂。本插件 host 零依赖 dsh-tools（见 `docs/thinking/2026-08-15-dsh-tools-instance-split.md`），不受影响 |
 | scope 包发布 404/403 | 确认 `@idea-maglev` 组织存在且你有 publish 权限；`publishConfig.access: public` 已配 |
+| `dsh plugin add @idea-maglev/maglev-for-dsh` 报 404 / "not in the npm registry" | ① 确认 `~/.npmrc` 有 `@idea-maglev:registry=https://registry.npmjs.org/`（scope 走公域）；② 若 curl 能访问但 pnpm 报 404，是 pnpm metadata 缓存了失败结果，清缓存：`rm -rf ~/Library/Caches/pnpm/metadata` |
+| 安装时 profile 的 pnpm 走私域 registry | 默认 registry 若指向公司私域（如 npmmirror），`@idea-maglev` scope 配置在 `~/.npmrc` 后即可让该 scope 走公域，其他包不受影响 |
+
+## 安装（用户侧）
+
+```bash
+# ~/.npmrc 加一行（scope 走公域，其他包不受影响）
+@idea-maglev:registry=https://registry.npmjs.org/
+
+# 安装到 profile
+dsh plugin --profile <name> add @idea-maglev/maglev-for-dsh
+```
 
 ## 本地开发（link 模式）
 
