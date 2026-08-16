@@ -39,7 +39,7 @@ tar -tzf /tmp/idea-maglev-maglev-for-dsh-*.tgz   # 确认含 index.mjs / client.
 
 ```bash
 git add -A && git commit -m "..."               # 功能/修复提交
-git push -u origin master                       # 推到 GitHub
+git push -u origin main                        # 推到 GitHub
 git tag v0.1.0 && git push origin v0.1.0         # 版本 tag（GitHub Release 用它）
 ```
 
