@@ -74,7 +74,7 @@ flowchart LR
 | **安装插件**（`dsh plugin add`） | **零改动**——插件装在 dsh profile，技能运行时注入，不动项目目录 |
 | **读真相**（`maglev_reality_status` / `maglev_spec_check`） | 只读，不写 |
 | **结晶**（`maglev_crystallize`） | 写入 `specs/<目标层>/` 一个结晶文件（如 `2026-08-16-xxx.md`） |
-| **初始化**（`/maglev-init`） | 注入 Maglev 核心结构：`specs/`（知识分层）、`.agents/`、`.maglev/`、`docs/thinking/`、`issues/`、`AGENTS.md`（会话纪律） |
+| **初始化**（`/maglev-init`） | 注入 Maglev 核心结构：`specs/`（知识分层）、`docs/thinking/`、`issues/`、`AGENTS.md`（会话纪律）、`.maglev/` 配置、以及 `.agents/` 下的 Reality Profile（`00_profile.yaml`）。**注意：不会把插件的 29 个技能复制进项目**——技能在插件包里，运行时注入 |
 
 初始化后，你的仓库多了这些目录，它们的作用：
 
