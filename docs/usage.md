@@ -8,7 +8,7 @@
 
 ```mermaid
 flowchart TD
-    A["1. 安装 dsh<br/>（前置，见 dsh 官方文档）"] --> B["2. 安装插件<br/>dsh plugin add"]
+    A["1. 安装 dsh<br/>（前置，见 dsh 官方文档）"] --> B["2. 安装插件<br/>pnpm dsh plugin add"]
     B --> C{"项目类型？"}
     C -->|"新项目"| D["3a. 初始化<br/>说"初始化 maglev""]
     C -->|"存量项目"| E["3b. 接入<br/>接入 maglev"]
@@ -18,7 +18,7 @@ flowchart TD
 
 ### 1. 前置：安装 dsh
 
-dsh（DeepSeek Harness）是本插件的宿主。它的安装方式以 dsh 官方文档为准（当前是 developer preview）。装好后能执行 `dsh --profile web` 启动即可。
+dsh（DeepSeek Harness）是本插件的宿主。它是 developer preview，**没有全局 `dsh` 命令**——所有操作都在 **dsh 源码 checkout 目录下**用 `pnpm dsh <子命令>` 执行。安装方式以 dsh 官方文档为准。
 
 ### 2. 安装 Maglev for DSH
 
@@ -26,8 +26,12 @@ dsh（DeepSeek Harness）是本插件的宿主。它的安装方式以 dsh 官�
 # ① 在 ~/.npmrc 加一行（让 @idea-maglev scope 走公域 npm，其他包不受影响）
 @idea-maglev:registry=https://registry.npmjs.org/
 
-# ② 安装到 profile
-dsh plugin --profile web add @idea-maglev/maglev-for-dsh
+# ② 在 dsh checkout 目录下，安装到 web profile（profile 不存在会自动创建）
+cd <dsh-checkout>
+pnpm dsh plugin --profile web add @idea-maglev/maglev-for-dsh
+
+# ③ 启动 web
+pnpm dsh web
 ```
 
 装完即拥有：29 个技能（自动注入）、3 个 spec 工具 + 结晶门禁、真相卡片 + 结晶卡片。
@@ -73,7 +77,7 @@ flowchart LR
 
 | 动作 | 对仓库的影响 |
 |---|---|
-| **安装插件**（`dsh plugin add`） | **零改动**——插件装在 dsh profile，技能运行时注入，不动项目目录 |
+| **安装插件**（`pnpm dsh plugin add`） | **零改动**——插件装在 dsh profile，技能运行时注入，不动项目目录 |
 | **读真相**（`maglev_reality_status` / `maglev_spec_check`） | 只读，不写 |
 | **结晶**（`maglev_crystallize`） | 写入 `specs/<目标层>/` 一个结晶文件（如 `2026-08-16-xxx.md`） |
 | **初始化**（对 AI 说"初始化 maglev"） | 注入 Maglev 核心结构：`specs/`（知识分层）、`docs/thinking/`、`issues/`、`AGENTS.md`（会话纪律）、`.maglev/` 配置、以及 `.agents/` 下的 Reality Profile（`00_profile.yaml`）。**注意：不会把插件的 29 个技能复制进项目**——技能在插件包里，运行时注入 |

@@ -14,7 +14,7 @@
 
 ```mermaid
 flowchart LR
-    U["dsh 用户"] -->|"dsh plugin add"| M["Maglev for DSH"]
+    U["dsh 用户"] -->|"pnpm dsh plugin add"| M["Maglev for DSH"]
     M --> S["29 技能<br/>自动发现"]
     M --> G["Maglev GUI<br/>真相卡片 + 结晶卡片"]
     M --> T["spec 工具<br/>验证门禁"]
@@ -33,13 +33,19 @@ dsh 提供了强大的执行能力（agent 循环、工具、沙箱、多代理�
 
 ## 安装
 
+> 前提：dsh 是 developer preview，**没有全局 `dsh` 命令**。所有 dsh 操作都在 **dsh 源码 checkout 目录下**用 `pnpm dsh <子命令>` 执行。
+
 ```bash
-dsh plugin add @idea-maglev/maglev-for-dsh
+# 在 dsh checkout 目录下，把插件装进 web profile（profile 不存在会自动创建）
+pnpm dsh plugin --profile web add @idea-maglev/maglev-for-dsh
+
+# 启动 web（用默认 web profile，加载 maglev）
+pnpm dsh web
 ```
 
-安装后启动 web：`dsh --profile web --port 3099`，即出现 Maglev 卡片（真相卡片 + 结晶卡片）。
+启动后打开页面（默认 http://127.0.0.1:3080），即出现 Maglev 卡片（真相卡片 + 结晶卡片）。
 
-> 本地开发：`dsh plugin add ./maglev-for-dsh`（link 本地 checkout）。
+> 本地开发（从源码安装，改动即生效）：`pnpm dsh plugin --profile <name> add ./maglev-for-dsh`（link 本地 checkout）。
 
 ## 使用
 
