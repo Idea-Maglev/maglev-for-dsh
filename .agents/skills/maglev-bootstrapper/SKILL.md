@@ -19,7 +19,7 @@ metadata:
 
 ## 概览 (Overview)
 
-将 `maglev_init_guide.md` 的初始化流程自动化。它负责分析当前目录状态，注入 Maglev 核心结构，并**交互式收集代码仓库信息**。
+自动初始化 Maglev 环境：分析当前目录状态，用 `maglev_init` 工具注入最小骨架（specs 四层 + AGENTS.md + docs/thinking），并**交互式收集代码仓库信息**回填。
 
 ## 何时使用 (When to use)
 
@@ -37,7 +37,12 @@ Skill 扮演 **[Architect]** 角色，执行以下阶段：
 
 ### Phase 2: Inject (骨架注入)
 
-物理复制核心骨架：`.agents/`, `.maglev/`, `specs/`, `docs/`, `issues/`。
+调用 `maglev_init` 工具注入最小 Maglev 骨架：
+
+- 创建 `specs/00_vision/`、`specs/10_reality/`、`specs/20_evolution/active/`、`specs/90_archive/`、`docs/thinking/`
+- 写入 `AGENTS.md`（含会话纪律区块，模板取自本插件包；若已存在则跳过，不覆盖）
+
+> 骨架由 `maglev_init` 工具机械写入（不依赖外部 installer）。Phase 3 收集到的项目信息用于回填 `AGENTS.md` 的项目理解区（project_summary 参数）。
 
 ### Phase 3: Configure & Register (配置与仓库登记)
 

@@ -54,6 +54,22 @@ export const inject = ['tools', 'skills']
 const PKG_SKILLS_DIR = fileURLToPath(new URL('../.agents/skills', import.meta.url))
 // dsh-skill 的 bundled 标准 rank（项目技能 rank 100-500，bundled 600 最不优先，项目优先）
 const BUNDLED_SKILL_RANK = 600
+// AGENTS.md 骨架模板（包内，含 maglev:managed:discipline 区块——结晶门禁检查的 marker）
+const AGENTS_TEMPLATE = fileURLToPath(new URL('../.agents/skills/_internal/ai-context-check/templates/AGENTS.minimal.md', import.meta.url))
+
+// 通用项目的 Reality Profile 模板（空 domains，由逆向/结晶逐步登记域）。
+// 与 maglev 自身的 7 域 profile 不同：通用项目有自己的能力域，不从 maglev 套用。
+const GENERIC_PROFILE = JSON.stringify({
+  profile_id: 'project-v1',
+  layout_version: 1,
+  profile_scope: 'project',
+  domains: [],
+  knowledge_statuses: ['established', 'unknown', 'not_established', 'not_applicable'],
+  slot_entry_contract: {
+    required_fields: ['knowledge_status', 'evidence_refs'],
+    not_applicable_requires_evidence: true,
+  },
+}, null, 2) + '\n'
 
 // Maglev 知识分层骨架（相对项目根）
 const SPECS_SKELETON_DIRS = [
@@ -103,18 +119,7 @@ async function pathExists(p: string): Promise<boolean> {
   }
 }
 
-// 检查目录存在且至少含一个 .md 文件（避免"空目录也 PASS"的假阳性）
-async function dirHasMarkdown(p: string): Promise<{ ok: boolean; reason: string }> {
-  try {
-    const entries = await readdir(p, { withFileTypes: true })
-    const ok = entries.some((e) => e.isFile() && e.name.endsWith('.md'))
-    return ok ? { ok, reason: '' } : { ok, reason: ' (empty or no .md)' }
-  } catch {
-    return { ok: false, reason: ' (missing)' }
-  }
-}
-
-async function runSpecCheck(root: string): Promise<SpecCheckResult> {
+async function runSpecCheck(root: string, availableSkills?: ReadonlySet<string>): Promise<SpecCheckResult> {
   const results: SpecCheckResult['results'] = []
   for (const rel of SPECS_SKELETON_DIRS) {
     const ok = await pathExists(join(root, rel))
@@ -131,16 +136,23 @@ async function runSpecCheck(root: string): Promise<SpecCheckResult> {
   } else {
     results.push({ level: 'FAIL', check: 'discipline_block', detail: 'AGENTS.md (missing)' })
   }
+  // 主链路技能：优先用运行时技能 registry（ctx.skills）判断"是否可加载"——
+  // dsh 插件模式下技能在插件包 provider 注入，不在项目 .agents/skills 里。
+  // 无 registry（降级）时才回退到查项目文件。
   const skillsDir = join(root, '.agents', 'skills')
   for (const skill of MAINLINE_SKILLS) {
-    const ok = await pathExists(join(skillsDir, skill, 'SKILL.md'))
+    const ok = availableSkills
+      ? availableSkills.has(skill)
+      : await pathExists(join(skillsDir, skill, 'SKILL.md'))
     results.push({ level: ok ? 'PASS' : 'FAIL', check: 'mainline_skills', detail: skill })
   }
-  const thinking = await dirHasMarkdown(join(root, 'docs', 'thinking'))
+  // docs/thinking：目录存在即可。非空是后续迭代的软提醒，不作为首次结晶的硬门禁
+  // （否则"先有决策记录才能结晶、决策记录又靠迭代产生"会死锁）。
+  const thinkingExists = await pathExists(join(root, 'docs', 'thinking'))
   results.push({
-    level: thinking.ok ? 'PASS' : 'FAIL',
+    level: thinkingExists ? 'PASS' : 'FAIL',
     check: 'docs_thinking',
-    detail: 'docs/thinking' + thinking.reason,
+    detail: thinkingExists ? 'docs/thinking' : 'docs/thinking (missing)',
   })
   const fail = results.filter((r) => r.level === 'FAIL').length
   return { pass: results.length - fail, fail, results }
@@ -298,11 +310,30 @@ async function getBundledSkill(candidate: {
 }
 
 export function apply(ctx: Context): void {
+  // 运行时技能 registry（ctx.skills），用于 spec_check 判断"主链路技能是否可加载"。
+  // dsh 插件模式下技能在插件包 provider 注入，不在项目 .agents/skills 里。
+  const skillsRegistry = (ctx as unknown as {
+    skills?: {
+      registerProvider(p: unknown): unknown
+      list(opts: { cwd: string; scope?: unknown; signal?: unknown }): Promise<readonly { name: string }[]>
+    }
+  }).skills
+
+  // 查询当前项目下可加载的技能名集合；registry 不可用（降级）时返回 undefined。
+  async function availableSkillNames(root: string, scope?: unknown, signal?: unknown): Promise<ReadonlySet<string> | undefined> {
+    if (!skillsRegistry) return undefined
+    try {
+      const list = await skillsRegistry.list({ cwd: root, scope, signal })
+      return new Set((list ?? []).map((s) => s.name))
+    } catch {
+      return undefined
+    }
+  }
+
   // 技能注入：任何项目（无需本地 .agents/skills）都能发现 maglev 技能。
   // ctx.skills 由 dsh-skill 服务提供；结构按 dsh 的 SkillProvider 接口。
   try {
-    const skills = (ctx as unknown as { skills?: { registerProvider(p: unknown): unknown } }).skills
-    skills?.registerProvider(() => ({
+    skillsRegistry?.registerProvider(() => ({
       name: 'maglev-bundled',
       list: listBundledSkills,
       get: getBundledSkill,
@@ -310,6 +341,53 @@ export function apply(ctx: Context): void {
   } catch {
     // 技能注册失败不阻断工具能力（降级：仅工具可用）
   }
+
+  ctx.tools.register({
+    name: 'maglev_init',
+    description: '初始化 Maglev 骨架：创建 specs 四层（00_vision/10_reality/20_evolution/active/90_archive）与 docs/thinking 目录，并写入含会话纪律区块的 AGENTS.md。新项目接入 Maglev 的第一步，由 maglev-bootstrapper 技能调用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        project_summary: { type: 'string', description: '一句话项目目标（写入 AGENTS.md 的项目理解区）' },
+      },
+    },
+    output: {
+      schema: { type: 'object', additionalProperties: true },
+      render: (_args, value) => [
+        { type: 'text', text: `已初始化 Maglev 骨架：\n${value.dirs.join('\n')}\nAGENTS.md ${value.agentsMd === 'created' ? '已创建' : '已存在，跳过'}` },
+      ],
+    },
+    async execute(args: { project_summary?: string }, exec) {
+      const root = projectRootOf(exec)
+      const dirs: string[] = []
+      for (const rel of SPECS_SKELETON_DIRS) {
+        await mkdir(join(root, rel), { recursive: true })
+        dirs.push(rel)
+      }
+      const thinkingDir = join(root, 'docs', 'thinking')
+      await mkdir(thinkingDir, { recursive: true })
+      dirs.push('docs/thinking')
+      // AGENTS.md：存在则跳过，不覆盖用户已有内容
+      const agentsPath = join(root, 'AGENTS.md')
+      let agentsMd = 'exists'
+      if (!(await pathExists(agentsPath))) {
+        let content = await readFile(AGENTS_TEMPLATE, 'utf8')
+        if (args.project_summary) {
+          content = content.replace('<一句话说明项目做什么>', args.project_summary)
+        }
+        await writeFile(agentsPath, content, 'utf8')
+        agentsMd = 'created'
+      }
+      // Reality Profile：空 domains 起步（通用项目有自己的能力域，逆向/结晶时逐步登记）
+      const profilePath = join(root, 'specs', '10_reality', '00_profile.yaml')
+      let profile = 'exists'
+      if (!(await pathExists(profilePath))) {
+        await writeFile(profilePath, GENERIC_PROFILE, 'utf8')
+        profile = 'created'
+      }
+      return { dirs, agentsMd, profile }
+    },
+  })
 
   ctx.tools.register({
     name: 'maglev_spec_check',
@@ -325,7 +403,8 @@ export function apply(ctx: Context): void {
     },
     async execute(_args, exec) {
       const root = projectRootOf(exec)
-      return runSpecCheck(root)
+      const available = await availableSkillNames(root, exec.agent, exec.signal)
+      return runSpecCheck(root, available)
     },
   })
 
@@ -392,7 +471,8 @@ export function apply(ctx: Context): void {
   ctx.on('tools/pre-execute', async (exec, next) => {
     if (exec.name !== 'maglev_crystallize') return next()
     const root = projectRootOf(exec.agent ? { agent: exec.agent } : {})
-    const check = await runSpecCheck(root)
+    const available = await availableSkillNames(root, exec.agent, exec.signal)
+    const check = await runSpecCheck(root, available)
     if (check.fail > 0) {
       return {
         kind: 'deny',

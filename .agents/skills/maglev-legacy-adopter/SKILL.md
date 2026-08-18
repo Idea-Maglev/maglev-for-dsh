@@ -51,8 +51,8 @@ metadata:
 **目标**：建立第一个可持续依赖的现实锚点。
 
 - 询问本项目中最核心、或近期准备修改的功能范围。
-- 先读取或创建 `specs/10_reality/00_profile.yaml` 与固定骨架。
-- 调用 `maglev-reverse-spec` 建立第一个现实锚点，并将结果映射到 Profile 的主域和槽位。
+- `specs/10_reality/00_profile.yaml` 由 `maglev_init` 创建（空 domains 起步，通用项目有自己的能力域，不套 maglev 的 7 域）。
+- 调用 `maglev-reverse-spec` 建立第一个现实锚点，并把逆向结果登记进 Profile 的 domains（项目自己的能力域）。
 - 无法映射的事实保持 unknown 或提出版本化扩展，不按主题新建目录。
 
 ### Phase 4: 输入质量审计
