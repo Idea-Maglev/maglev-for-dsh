@@ -49,6 +49,8 @@ dsh plugin add @idea-maglev/maglev-for-dsh
 - `maglev_crystallize`：把已验证结论结晶到 `specs/`，产生结晶卡片（先过门禁）
 - `maglev_spec_check`：spec 完整性机械检查
 
+完整流程（安装 → 初始化/接入 → 日常迭代 → 对仓库的影响 → 场景举例）见 [使用手册](docs/usage.md)。
+
 ## 它与 Maglev、dsh 的关系
 
 - **Maglev（源仓库）**：方法论与技能的原型，仅作参考，**非运行时依赖**（本插件零依赖，见下）
