@@ -10,14 +10,13 @@
 2. **Maglev GUI**：
    - **结晶卡片**：每次迭代沉淀了什么，以卡片形式弹在会话流里
    - **真相卡片**：AI 读到的项目现状（能力域/主题/契约状态），对人可见
-   - **Maglev 面板**：项目知识分层与主链路的可视化入口
 3. **spec 工具与验证门禁**：spec 完整性检查 + 结晶前机械门禁，把"验证"从模型自觉变成机械约束
 
 ```mermaid
 flowchart LR
     U["dsh 用户"] -->|"dsh plugin add"| M["Maglev for DSH"]
     M --> S["29 技能<br/>自动发现"]
-    M --> G["Maglev GUI<br/>面板 + 真相卡片 + 结晶卡片"]
+    M --> G["Maglev GUI<br/>真相卡片 + 结晶卡片"]
     M --> T["spec 工具<br/>验证门禁"]
     S --> W["可控迭代 + 知识沉淀 + 降依赖"]
     G --> W
@@ -30,7 +29,7 @@ dsh 提供了强大的执行能力（agent 循环、工具、沙箱、多代理�
 
 - **可控迭代**：结晶必须过 spec 完整性门禁，不通过就不能沉淀（机械强制，不靠 AI 自觉）
 - **知识沉淀**：每次迭代结晶写回 `specs/` 知识分层，并产生会话事件（结晶卡片）
-- **随时接手**：真相卡片 + 面板让新接手的人快速看懂"项目是什么、做到哪了"
+- **随时接手**：真相卡片让新接手的人快速看懂"项目是什么、做到哪了"
 
 ## 安装
 
@@ -38,7 +37,7 @@ dsh 提供了强大的执行能力（agent 循环、工具、沙箱、多代理�
 dsh plugin add @idea-maglev/maglev-for-dsh
 ```
 
-安装后启动 web：`dsh --profile web --port 3099`，即出现 Maglev 面板与卡片。
+安装后启动 web：`dsh --profile web --port 3099`，即出现 Maglev 卡片（真相卡片 + 结晶卡片）。
 
 > 本地开发：`dsh plugin add ./maglev-for-dsh`（link 本地 checkout）。
 
@@ -69,7 +68,7 @@ dsh plugin add @idea-maglev/maglev-for-dsh
 | 路径 | 用途 |
 |---|---|
 | `index.ts` | dsh host 插件入口（3 个 spec 工具 + 结晶门禁 + 会话事件） |
-| `src/client/` | dsh client 插件（Maglev 面板 + 真相卡片 + 结晶卡片） |
+| `src/client/` | dsh client 插件（真相卡片 + 结晶卡片） |
 | `.agents/skills/` | 29 个固化技能（产品资产）+ `_internal` 协议主体 |
 | `specs/` | 本仓库自己的知识分层（dogfooding 自证） |
 | `docs/thinking/` | 设计决策 |
