@@ -22,7 +22,7 @@ const CLIENT_EXTERNALS = [
   '@deepseek-ai/dsh-client-runtime/client',
 ] as const
 
-const PLUGIN_ID = 'maglev-for-dsh'
+const PLUGIN_ID = '@idea-maglev/maglev-for-dsh'
 
 export default [
   {
